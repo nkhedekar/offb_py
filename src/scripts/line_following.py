@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
-from geometry_msgs.msg import *
+from geometry_msgs.msg import PoseStamped
 from mavros_msgs.srv import CommandBool
 from mavros_msgs.srv import SetMode
 from mavros_msgs.msg import State
@@ -11,15 +11,13 @@ current_state = State()
 def state_cb(msg):
 	global current_state
 	current_state = msg
-	print "callback"
+	#print "callback"
 
 if __name__=="__main__":
 	global current_state
 	rospy.init_node('offb_node', anonymous=True)	
 	rospy.Subscriber("mavros/state", State, state_cb)
 	local_pos_pub = rospy.Publisher('mavros/setpoint_position/local', PoseStamped, queue_size=10)
-	local_vel_pub = rospy.Publisher('mavros/setpoint_velocity/cmd_vel', Twist, queue_size=10)
-
 	print("Publisher and Subscriber Created")
 	arming_client = rospy.ServiceProxy('mavros/cmd/arming', CommandBool)
 	set_mode_client = rospy.ServiceProxy('mavros/set_mode', SetMode)
@@ -33,14 +31,9 @@ if __name__=="__main__":
 	print("Creating pose")
 	pose = PoseStamped()
 	#set position here
-	pose.pose.position.x = 10
-	pose.pose.position.y = 10
+	pose.pose.position.x = 0
+	pose.pose.position.y = 0
 	pose.pose.position.z = 7
-
-	vel = Twist()
-	vel.linear.x = 20
-	vel.linear.y = 20
-	vel.linear.z = 20
 	
 	for i in range(100):
 		local_pos_pub.publish(pose)
@@ -66,9 +59,11 @@ if __name__=="__main__":
 			if arm_client_1.success:
 				print("Vehicle armed")
 			last_request = rospy.Time.now()
+		
+		pose.pose.position.x += 0.1
+		pose.pose.position.y = pose.pose.position.x + 10
 			
 		local_pos_pub.publish(pose)
-		local_vel_pub.publish(vel)
-		#print current_state
+		print pose
 		rate.sleep()
 	
